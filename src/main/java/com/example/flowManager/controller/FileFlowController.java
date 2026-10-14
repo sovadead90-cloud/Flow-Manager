@@ -32,9 +32,7 @@ public class FileFlowController {
 
     @GetMapping("/{id}/status")
     public ResponseEntity<FileStatus> getStatus(@PathVariable UUID id) {
-        return repository.findById(id)
-                .map(record -> ResponseEntity.ok(record.getStatus()))
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(fileFlowService.getFileStatus(id));
     }
 
     @GetMapping("/{id}/download")

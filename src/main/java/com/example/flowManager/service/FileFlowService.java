@@ -69,4 +69,10 @@ public class FileFlowService {
                         .build()
         );
     }
+
+    public FileStatus getFileStatus(UUID id) {
+        return repository.findById(id)
+                .map(FileRecord::getStatus)
+                .orElseThrow(() -> new FileRecordNotFoundException("Файл с ID " + id + " не найден в базе данных"));
+    }
 }

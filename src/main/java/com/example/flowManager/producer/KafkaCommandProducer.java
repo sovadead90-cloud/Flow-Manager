@@ -1,5 +1,6 @@
 package com.example.flowManager.producer;
 
+import com.example.flowManager.dto.ConversionCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -18,13 +19,10 @@ public class KafkaCommandProducer {
 
         UUID messageId = UUID.randomUUID();
 
-        String jsonPayload = String.format(
-                "{\"messageId\":\"%s\",\"sagaId\":\"%s\",\"minioPath\":\"%s\"}",
-                messageId, fileId, minioPath
-        );
+        ConversionCommand command = new ConversionCommand(messageId, fileId, minioPath);
 
         log.info("SAGA [{}]: Отправка команды конвертации в топик 'file-conversion-commands'", fileId);
 
-        kafkaTemplate.send("file-conversion-commands", fileId.toString(), jsonPayload);
+        kafkaTemplate.send("file-conversion-commands", fileId.toString(), command);
     }
 }

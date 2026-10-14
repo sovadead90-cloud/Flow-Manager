@@ -1,4 +1,4 @@
-package com.example.flowManager.controller;
+package com.example.flowManager.config;
 
 import com.example.flowManager.exception.FileRecordNotFoundException;
 import com.example.flowManager.exception.FileNotReadyException;

@@ -2,19 +2,31 @@ server:
   port: 8081
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 1GB
+      max-request-size: 1100MB
   application:
     name: flow-manager
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/converter_db}
     username: ${DB_USERNAME:converter_user}
     password: ${DB_PASSWORD:postgres111}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
   kafka:
     bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
     consumer:

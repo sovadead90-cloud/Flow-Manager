@@ -18,16 +18,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileFlowController {
 
-    private final FileRecordRepository repository;
     private final FileFlowService fileFlowService;
 
     @Value("${minio.bucketName}")
     private String bucketName;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UUID> uploadFile(@RequestParam("file") MultipartFile file) throws Exception {
-        log.info("Запрос на загрузку файла: {}", file.getOriginalFilename());
-        return ResponseEntity.ok(fileFlowService.processIncomingFile(file, bucketName));
+    public ResponseEntity<UUID> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader("X-User-Login") String login
+    ) throws Exception {
+        log.info(
+                "Запрос на загрузку файла от пользователя {}: {}",
+                login,
+                file.getOriginalFilename()
+        );
+
+        return ResponseEntity.ok(
+                fileFlowService.processIncomingFile(file, bucketName, login)
+        );
     }
 
     @GetMapping("/{id}/status")
@@ -41,5 +50,4 @@ public class FileFlowController {
         String presignedUrl = fileFlowService.presignedDownloadUrl(id, bucketName);
         return ResponseEntity.ok(presignedUrl);
     }
-
 }

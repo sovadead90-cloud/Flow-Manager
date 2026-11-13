@@ -49,3 +49,8 @@ minio:
   secretKey: ${MINIO_SECRET_KEY:minio111}
   bucketName: ${MINIO_BUCKET:saga-file-storage}
   region: ${MINIO_REGION:us-east-1}
+  presigned-url-expiry-minutes: 15
+
+app:
+  cache:
+    subscription-ttl: 5m

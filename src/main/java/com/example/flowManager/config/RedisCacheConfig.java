@@ -2,6 +2,7 @@ package com.example.flowManager.config;
 
 import com.example.flowManager.dto.SubscriptionResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -15,7 +16,8 @@ public class RedisCacheConfig {
 
     @Bean
     public RedisCacheConfiguration redisCacheConfiguration(
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            @Value("${app.cache.subscription-ttl}") Duration subscriptionCacheTtl
     ) {
         Jackson2JsonRedisSerializer<SubscriptionResponse> serializer =
                 new Jackson2JsonRedisSerializer<>(
@@ -24,7 +26,7 @@ public class RedisCacheConfig {
                 );
 
         return RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(5))
+                .entryTtl(subscriptionCacheTtl)
                 .disableCachingNullValues()
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair

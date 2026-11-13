@@ -12,8 +12,8 @@ import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.PutObjectArgs;
 import io.minio.MinioClient;
 import io.minio.http.Method;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class FileFlowService {
 
     private static final long MAX_FREE_FILE_SIZE_BYTES = 100L * 1024 * 1024;
@@ -31,6 +30,23 @@ public class FileFlowService {
     private final KafkaCommandProducer commandProducer;
     private final MinioClient minioClient;
     private final SubscriptionLookupService subscriptionLookupService;
+    private final int presignedUrlExpiryMinutes;
+
+
+    public FileFlowService(
+            FileRecordRepository repository,
+            KafkaCommandProducer commandProducer,
+            MinioClient minioClient,
+            SubscriptionLookupService subscriptionLookupService,
+            @Value("${minio.presigned-url-expiry-minutes}") int presignedUrlExpiryMinutes
+    ) {
+        this.repository = repository;
+        this.commandProducer = commandProducer;
+        this.minioClient = minioClient;
+        this.subscriptionLookupService = subscriptionLookupService;
+        this.presignedUrlExpiryMinutes = presignedUrlExpiryMinutes;
+    }
+
 
     @Transactional
     public UUID processIncomingFile(
@@ -38,6 +54,13 @@ public class FileFlowService {
             String bucketName,
             String login
     ) throws Exception {
+
+        log.info(
+                "Запрос на загрузку файла от пользователя {}: {}",
+                login,
+                file.getOriginalFilename()
+        );
+
         SubscriptionResponse subscription =
                 subscriptionLookupService.getByLogin(login);
 
@@ -80,6 +103,9 @@ public class FileFlowService {
     }
 
     public String presignedDownloadUrl(UUID id, String bucketName) throws Exception {
+
+        log.info("Запрос временной Presigned-ссылки для ID: [{}]", id);
+
         FileRecord record = repository.findById(id)
                 .orElseThrow(() -> new FileRecordNotFoundException("Файл с ID " + id + " не найден в базе данных"));
 
@@ -92,7 +118,7 @@ public class FileFlowService {
                         .method(Method.GET)
                         .bucket(bucketName)
                         .object(record.getResultPath())
-                        .expiry(15, TimeUnit.MINUTES)
+                        .expiry(presignedUrlExpiryMinutes, TimeUnit.MINUTES)
                         .build()
         );
     }

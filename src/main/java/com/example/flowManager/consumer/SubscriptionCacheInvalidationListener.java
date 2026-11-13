@@ -1,11 +1,10 @@
 package com.example.flowManager.consumer;
 
+import com.example.flowManager.service.SubscriptionLookupService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class SubscriptionCacheInvalidationListener {
 
-    private final CacheManager cacheManager;
+    private final SubscriptionLookupService subscriptionLookupService;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
@@ -30,16 +29,7 @@ public class SubscriptionCacheInvalidationListener {
                 log.warn("В Kafka-событии инвалидации отсутствует login: {}", message);
                 return;
             }
-
-            Cache subscriptionsCache = cacheManager.getCache("subscriptions");
-
-            if (subscriptionsCache == null) {
-                log.warn("Кеш subscriptions не найден");
-                return;
-            }
-
-            subscriptionsCache.evict(login);
-            log.info("Кеш подписки пользователя {} удалён", login);
+            subscriptionLookupService.evictSubscriptionCache(login);
         } catch (Exception exception) {
             log.error("Не удалось обработать событие инвалидации кеша: {}", message, exception);
         }
